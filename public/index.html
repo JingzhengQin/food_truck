@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en" >
+<title>SF Food Trucks</title>
+<head>
+    <!-- libs -->
+    <script type="text/javascript" src="/js/lib/jquery.js"></script>
+    <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?sensor=false"></script>
+    <script type="text/javascript" src="/js/lib/underscore.js"></script>
+    <script type="text/javascript" src="/js/lib/backbone-min.js"></script>
+    <script type="text/javascript" src="/js/lib/backbone.googlemaps.js"></script>
+    <script type="text/javascript" src="/js/lib/markermanager.js"></script>
+    <script type="text/javascript" src="/js/lib/bootstrap.js"></script>
+
+    <!-- app -->
+    <script type="text/javascript" src="/js/models/truck.js"></script>
+    <script type="text/javascript" src="/js/collections/truck_list.js"></script>
+    <script type="text/javascript" src="/js/views/truck_list_item_view.js"></script>
+    <script type="text/javascript" src="/js/views/truck_list_view.js"></script>
+    <script type="text/javascript" src="/js/views/truck_marker_view.js"></script>
+    <script type="text/javascript" src="/js/app.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="/css/lib/bootstrap.css">
+    <link rel="stylesheet" href="/css/lib/animation.css">
+    <link rel="stylesheet" type="text/css" href="/css/app.css">
+
+</head>
+
+<body>
+
+<!-- -----------------Templates----------------- -->
+<script id="truck-info-window-template" type="text/template">
+    <img id="truck-info-img" src=<%=image_src %>></br>
+    <strong class="applicant"><a href="#"><%=applicant %></strong></a>
+    <br>
+    <p class="facility_type">Type: <%=facility_type %> (Location ID: <%=location_id %>)</p>
+    <p class="food_items"><%=food_items %></p>
+    <p class="address"><%=address %></p>
+    <p class="location_desc"><%=location_desc %></p>
+</script>
+
+<script id="truck-item-template" type="text/template">
+    <div>
+        <strong class="applicant"><a href="#"><%=applicant %></strong></a><br>
+        <p class="facility_type"> <img src=<%=image_src %>><%=facility_type %></p>
+        <p class="address"><%=address %></p>
+    </div>
+</script>
+
+
+<div id="app">  
+
+  <!-- -----------------Search Box----------------- -->
+  <div id="search-panel" class="row">
+      <div class="col-xs-6">
+        <input id="search-address" type="text" class="form-control" placeholder="Food Trucks Location (e.g. 1 DRUMM ST, San Francisco)">
+      </div>
+        <button id="search-button" type="button" class="btn btn-primary">Search</button>
+  </div>
+
+  <!-- -----------------Food Truck List----------------- -->
+  <div id="trucks_holder">
+      <div id="trucks_list_holder"><ul id="truck_list_items"></ul></div>
+  </div>
+
+</div>
+
+<!-- -----------------Google Map Area----------------- -->
+<div id="map_canvas"></div>
+</body>
+
+</html>
