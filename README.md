@@ -18,7 +18,7 @@ Type any address within SF into search box and hit enter/search button to find f
 
 Installation
 ------------
-1. Download the project.
+1. Download the project and make sure you have [node/npm](https://www.digitalocean.com/community/tutorials/how-to-install-express-a-node-js-framework-and-set-up-socket-io-on-a-vps), [mongoDB](https://www.mongodb.org/) installed in your machine.
 2. Go to root of the project and type `npm install` to install all dependencies.
 3. `node app.js` to start the app.
 
