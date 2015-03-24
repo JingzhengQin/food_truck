@@ -46,12 +46,13 @@ Back End
 --------
 Back end RESTful APIs to access food trucks data based on node express framework.
 It provides APIs to access trucks data in mongoDB.
-
+```
 Get /            // Documentation page
 
 GET /trucks      //Return all trucks
 
 GET /trucks/near/:latitude/:longitude/:maxDistance            // Return trucks near location (latitude, longitude) within maxDistance
+```
 
 Data Storage and Processing
 ---------------------------
