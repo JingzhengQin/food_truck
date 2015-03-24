@@ -5,31 +5,24 @@
 
 var TruckMarkerView = Backbone.View.extend({
 
-    tagName:  "li",
-
     initialize: function(options) {
+      this.model = options.model;
+      this.model.on('remove', this.remove, this);
+      this.map = options.map;
 
-      var self = this;
-
-      self.model = options.model;
-      self.model.on('remove', self.remove, self);
-
-      self.map = options.map;
-
-      var latitude = parseFloat(self.model.get('latitude'));
-      var longitude = parseFloat(self.model.get('longitude'));
-
-      self.marker = new google.maps.Marker({
-          map: self.map,
+      var latitude = parseFloat(this.model.get('latitude'));
+      var longitude = parseFloat(this.model.get('longitude'));
+      this.marker = new google.maps.Marker({
+          map: this.map,
           position: new google.maps.LatLng(latitude, longitude),
           animation: google.maps.Animation.DROP,
           icon : 'images/food_truck.png',
-          title: self.model.get("applicant"),
-          id : self.model.get('location_id')
+          title: this.model.get("applicant"),
+          id : this.model.get('location_id')
       });
       
+      // Render truck info html for marker
       var tmpl = _.template($('#truck-info-window-template').html());
-      
       var image_src = "images/truck_" + Math.floor(Math.random()*5+1) + ".png";
       var truck_info = tmpl({
           applicant: this.model.get("applicant"),
@@ -41,12 +34,12 @@ var TruckMarkerView = Backbone.View.extend({
           image_src: image_src
       });
 
-      self.marker.infowindow = new google.maps.InfoWindow({
+      this.marker.infowindow = new google.maps.InfoWindow({
         content: truck_info
       });
 
-      google.maps.event.addListener(self.marker, 'mouseover', self.show_truck_info);
-      google.maps.event.addListener(self.marker, 'mouseout', self.hide_truck_info);
+      google.maps.event.addListener(this.marker, 'mouseover', this.show_truck_info);
+      google.maps.event.addListener(this.marker, 'mouseout', this.hide_truck_info);
     },
 
     hide_truck_info : function() {
