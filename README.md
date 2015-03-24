@@ -9,6 +9,7 @@ The Food Truck Finder project is full stack project which contains two completel
 
 Directories
 -----------
+```
 .
 ├── app.js                               // Back end node server;
 ├── package.json                         // Node dependencies
@@ -49,3 +50,5 @@ Directories
     ├── error.jade
     ├── index.jade
     └── layout.jade
+```
+
