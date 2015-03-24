@@ -20,11 +20,6 @@ var TruckList = Backbone.Collection.extend({
     this.create(truck);
   },
 
-  // trucks are sorted by their name
-  comparator: function(truck) {
-    return truck.get('name');
-  },
-
   remove_all: function() {
     var model;
     while (model = this.pop()) {
