@@ -13,6 +13,7 @@
     "googlemaps": "*",
     "node-geocoder": "*",
     "sleep": "*",
-    "array-union": "*"
+    "array-union": "*",
+    "loadtest": "*"
   }
 }

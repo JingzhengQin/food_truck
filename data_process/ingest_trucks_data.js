@@ -16,9 +16,14 @@ promise.error(function(err){
 
 promise.success(function(doc){
 	console.log("Bingo!");
-	collection.ensureIndex( { location: "2dsphere" }, function (err, result) {
+	collection.index( { location: "2dsphere" }, function (err, result) {
 		if (err) console.log(err);
-		db.close();
+		
+		collection.index("location_id", function (err, result) {
+			if (err) console.log(err);
+			db.close();
+		})
+		
 	});
 	
 });
