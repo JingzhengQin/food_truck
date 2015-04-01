@@ -37,9 +37,13 @@ var TruckMarkerView = Backbone.View.extend({
       this.marker.infowindow = new google.maps.InfoWindow({
         content: truck_info
       });
-
       google.maps.event.addListener(this.marker, 'mouseover', this.show_truck_info);
       google.maps.event.addListener(this.marker, 'mouseout', this.hide_truck_info);
+
+      var that = this;
+      this.refresh_interval = setInterval( function() {
+        that.update_location(that.model)
+      }, 500);
     },
 
     hide_truck_info : function() {
@@ -52,9 +56,25 @@ var TruckMarkerView = Backbone.View.extend({
       this.infowindow.open(this.map, this);
     },
 
+    update_location : function(model) {
+      var location_id = model.get("location_id");
+      var that = this;
+      model.fetch( { success: function() {
+          var newPosition = new google.maps.LatLng(
+            parseFloat(model.get('latitude')),
+            parseFloat(model.get('longitude')));
+
+          that.marker.animateTo(newPosition, {  easing: "swing",
+                                           duration: 500,
+                                           complete: function() {}
+                                        });
+      }});
+    },
+
     render: function() { },
 
     remove : function() {
+      clearInterval(this.refresh_interval);
       this.marker.setMap(null);
       this.marker = null;
     }

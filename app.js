@@ -14,7 +14,7 @@ app.set('view engine', 'jade');
 
 var routes = require('./routes/index');
 
-// Make our db accessible to our router
+// Add context components to the request
 app.use(function(req,res,next){
     req.db = db;
     req.truck_collection = collection;
@@ -22,10 +22,11 @@ app.use(function(req,res,next){
 });
 
 
-// cache trucks info
+// cached trucks
 var cached_trucks = {};
 var original_truck_coordinates = {};
-var Max_Cache_Distance = 100; // meters
+var Max_Cache_Distance = 100; // The maximum distance a truck can move without updating mongodb (in meters)
+var MAX_TRUCK_COUNT = 50; // Maximum trucks to return in distance search
 
 /**
  * ============================================================
@@ -33,31 +34,44 @@ var Max_Cache_Distance = 100; // meters
  * ============================================================
  */
 
+/**
+ * Calculates the geo distance between two coordinates
+ * @return distance in meters
+ */
 function calculate_distance(latitude1, longitude1, latitude2, longitude2) {
     return geolib.getDistance(
     {latitude: parseFloat(latitude1), longitude: parseFloat(longitude1)},
     {latitude: parseFloat(latitude2), longitude: parseFloat(longitude2)});
 }
 
-function chained_bulk_update(truck_data, current_pos, callback) {
-    if (current_pos<truck_data.length) {
-
-        var new_truck = truck_data[current_pos];
+/**
+ * Chained style async operation to update a list of truck into mongodb
+ * @truck_data a list of trucks that need to update
+ * @current_pos index of truck that need to be update in current iteration
+ * @callback return err if any
+ */
+function chained_bulk_update(truck_list, current_pos, callback) {
+    if (current_pos<truck_list.length) {
+        var new_truck = truck_list[current_pos];
         var truck_id = new_truck.location_id.toString();
         var p = collection.update({"location_id": truck_id}, { $set: new_truck }, { upsert: true });
         p.complete(function (err) {
             if (err) {
-                callback(err);
-                return;
+                return callback(err);
             }
             
-            bulk_update(truck_data, current_pos+1, callback);
+            // continue the chain until we reach the end of the list
+            bulk_update(truck_list, current_pos+1, callback);
         });
     } else {
         callback(null);
     }
 }
 
+/**
+ * Clean and refresh cached trucks with data in mongodb
+ * @callback return error if any
+ */
 function refresh_cached_trucks(callback) {
    collection.find({}, function (err, results) {
        if (err) {
@@ -77,6 +91,13 @@ function refresh_cached_trucks(callback) {
     });
 }
 
+/**
+ * Write truck location to mongodb for given location id
+ * @location_id identify the truck which need to be update
+ * @latitue new latitude
+ * @longitude new longitude
+ * @callback return error if any
+ */
 function update_truck_location_mongodb(location_id, latitude, longitude, callback) {
     var update_data = {
         "latitude": latitude,
@@ -87,24 +108,32 @@ function update_truck_location_mongodb(location_id, latitude, longitude, callbac
         }
     }
 
-    var p = collection.update( {"location_id": location_id}, { $set: update_data }, { upsert: true });
+    var p = collection.update( {"location_id": location_id}, { $set: update_data });
     p.complete(function (err) {
             if (err) {
                 return callback(err);
             }
             callback(null);
         });
-   
 }
 
-var total_hit = 0;
-var total_miss = 0;
+/**
+ * Write truck location information to cached, persiste the new location into mongodb 
+ * if the truck has been move Max_Cache_Distance
+ * This will reduce pressure to mongoDB since every write will cause index update.
+ * @location_id identify the truck which need to be update
+ * @latitue new latitude
+ * @longitude new longitude
+ * @callback return error if any
+ */
 function update_truck_location_cached(location_id, latitude, longitude, callback) {
     get_truck_info_cached(location_id, function(err, truck_data) {
         if (err) {
             return callback(err);
         }
 
+        // original location persist the same value as mongodb store
+        // we store this info in a lazy way
         var original_coordinate = original_truck_coordinates[location_id];
         if (!original_coordinate) {
             original_coordinate = {
@@ -121,6 +150,8 @@ function update_truck_location_cached(location_id, latitude, longitude, callback
             "coordinates": [parseFloat(longitude), parseFloat(latitude)]
         }
 
+        // Calculates the distance between new location and original location
+        // update mongodb if the distance above Max_Cache_Distance to support geo search
         if (calculate_distance(original_coordinate.latitude, original_coordinate.longitude, latitude, longitude) > Max_Cache_Distance) {
             update_truck_location_mongodb(location_id, latitude, longitude, function(err) {
                 if (err) {
@@ -139,7 +170,12 @@ function update_truck_location_cached(location_id, latitude, longitude, callback
         }
     });
 }
-   
+
+/**
+ * Get truck infomation from mongodb
+ * @location_id identify the truck we need to fetch
+ * @callback arg1: return error if any; arg2: truck info if success
+ */
 function get_truck_info_mongodb(location_id, callback) {
     collection.findOne( {"location_id": location_id}, function (err, doc) {
         if (err) {
@@ -150,6 +186,11 @@ function get_truck_info_mongodb(location_id, callback) {
     });
 }
 
+/**
+ * Get truck information from cache first, if cache missed, fill the cache with the truck info in mongodb
+ * @location_id identify the truck we need to fetch
+ * @callback arg1: return error if any; arg2: truck info if success
+ */
 function get_truck_info_cached(location_id, callback) {
     var truck_data = cached_trucks[location_id];
     if (truck_data) {
@@ -166,11 +207,24 @@ function get_truck_info_cached(location_id, callback) {
     });
 }
 
-
-
+/**
+ * =============================================================
+ * Host all front end contents under this folder for convience
+ * =============================================================
+ */
 app.use(express.static('public'));
+
+/**
+ * ===============================
+ * Help/Document page for backend
+ * ===============================
+ */
 app.use('/help', routes);
-    
+
+/**
+ * Refresh truck data with sfgov.org info to keep data up to date
+ * Note: take argument to get data from different source if needed. We only have single source for now.
+ */
 app.get('/refresh', function(req, res, next) {
     truck_data_processor.process_truck_data_from_http('http://data.sfgov.org/resource/rqzj-sfat.json', function(err, truck_data) {
         if (err) {
@@ -194,16 +248,11 @@ app.get('/refresh', function(req, res, next) {
     });
 });
 
-app.get('/truck/:location_id', function (req, res, next) {
-    var location_id = req.params.location_id;
-    get_truck_info_mongodb(location_id, function (err, doc) {
-        if (err) {
-            return next(err);
-        }
-        return res.json(doc);
-    });
-});
-
+/**
+ * Get truck info by location_id
+ * @location_id identify the truck that we need
+ * @return truck detail info in json format
+ */
 app.get('/cache/truck/:location_id', function (req, res, next) {
     var location_id = req.params.location_id;
     get_truck_info_cached(location_id, function (err, doc) {
@@ -215,20 +264,28 @@ app.get('/cache/truck/:location_id', function (req, res, next) {
     });
 });
 
-app.put('/truck/location/:location_id/:latitude/:longitude', function (req, res, next) {
+/**
+ * Non-Cached version get truck info by location_id
+ * This API access mongodb directly to get truck info
+ * Prefer use cached version, leave this here API for performance test purpose
+ */
+app.get('/truck/:location_id', function (req, res, next) {
     var location_id = req.params.location_id;
-    var latitude = req.params.latitude;
-    var longitude = req.params.longitude;
-
-    update_truck_location_mongodb(location_id, latitude, longitude, function(err) {
+    get_truck_info_mongodb(location_id, function (err, doc) {
         if (err) {
             return next(err);
         }
-
-        return res.json({"status": "success"});
+        return res.json(doc);
     });
 });
 
+/**
+ * Update truck location
+ * @location_id identify the truck that need to be update
+ * @latitude new latitude
+ * @longitude new longitude
+ * @return success status
+ */
 app.put('/cache/truck/location/:location_id/:latitude/:longitude', function (req, res, next) {
     var location_id = req.params.location_id;
     var latitude = req.params.latitude;
@@ -243,6 +300,28 @@ app.put('/cache/truck/location/:location_id/:latitude/:longitude', function (req
     });
 });
 
+/**
+ * Non-Cached version update truck location
+ * This API access mongodb directly
+ * Prefer use cached version, leave this here API for performance test purpose
+ */
+app.put('/truck/location/:location_id/:latitude/:longitude', function (req, res, next) {
+    var location_id = req.params.location_id;
+    var latitude = req.params.latitude;
+    var longitude = req.params.longitude;
+
+    update_truck_location_mongodb(location_id, latitude, longitude, function(err) {
+        if (err) {
+            return next(err);
+        }
+
+        return res.json({"status": "success"});
+    });
+});
+
+/**
+ * Get all trucks from cache
+ */
 app.get('/trucks', function (req, res, next) {
     var result_trucks = [];
     for (var key in cached_trucks) {
@@ -251,6 +330,13 @@ app.get('/trucks', function (req, res, next) {
     res.json(result_trucks);
 });
 
+/**
+ * Fetch trucks near a given location
+ * @latitude latitude of the location need to search
+ * @longitude longitude of the location need to search
+ * @maxDistance maximum distance to search
+ * @return a list of trucks
+ */
 app.get('/trucks/near/:latitude/:longitude/:maxDistance', function (req, res, next) {
     var latitude = parseFloat(req.params.latitude);
     var longitude = parseFloat(req.params.longitude);
@@ -266,7 +352,7 @@ app.get('/trucks/near/:latitude/:longitude/:maxDistance', function (req, res, ne
                 "$maxDistance": maxDistance
             }
         }
-    }, {"limit": 50, "sort": "review_score"}, function (err, results) {
+    }, {"limit": MAX_TRUCK_COUNT, "sort": "review_score"}, function (err, results) {
         if (err) {
             next(err);
         }
@@ -276,6 +362,11 @@ app.get('/trucks/near/:latitude/:longitude/:maxDistance', function (req, res, ne
     });
 });
 
+/**
+ * ========================================
+ * Error handling and catch unknown page
+ * ========================================
+ */
 app.use(function(req, res, next) {
     console.log(req.url);
     var err = new Error('Not Found');
@@ -291,6 +382,11 @@ app.use(function(err, req, res, next) {
     });
 });
 
+/**
+ * ===========================================================
+ * Refresh truck data and start the truck finder application
+ * ===========================================================
+ */
 refresh_cached_trucks(function(err) {
     if (err) {
         throw new Error("Failed to refresh cached trucks. " + err.message);

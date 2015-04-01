@@ -18,7 +18,7 @@ promise.success(function(doc){
 	console.log("Bingo!");
 	collection.index( { location: "2dsphere" }, function (err, result) {
 		if (err) console.log(err);
-		
+
 		collection.index("location_id", function (err, result) {
 			if (err) console.log(err);
 			db.close();

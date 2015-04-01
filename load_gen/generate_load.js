@@ -3,7 +3,9 @@ var testing = require('testing');
 var geolib = require('geolib');
 var http = require('http');
 
-var url_base = "http://localhost:3000";
+var test_host = "localhost";
+var test_port = 3000;
+var url_base = "http://" + test_host + ":" + test_port;
 
 var cache_trucks = [];
 
@@ -27,8 +29,8 @@ function load_trucks(url, callback) {
 
 
 function create_random_move_request(truck_data) {
-	var d_lat = Math.floor(Math.random()*500+1) * 0.0000001;
-	var d_long = Math.floor(Math.random()*500+1) * 0.0000001;
+	var d_lat = Math.floor(Math.random()*1000-500) * 0.0000003;
+	var d_long = Math.floor(Math.random()*1000-500) * 0.0000003;
 	var t_lat = parseFloat(truck_data.latitude) + d_lat;
 	var t_long = parseFloat(truck_data.longitude) + d_long;
 
@@ -39,10 +41,10 @@ function create_random_move_request(truck_data) {
 	    "coordinates": [t_lat, t_long]
     };
 
-	return "/truck/location/" + truck_data.location_id + "/" + t_lat + "/" + t_long;
+	return truck_data.location_id + "/" + t_lat + "/" + t_long;
 }
 
-function truck_movement_load_generator(callback)
+function truck_movement_load_generator(options, update_api_base, callback)
 {
 	var start = 0;
 	load_trucks(url_base + "/trucks", function (err, trucks_list) {
@@ -51,27 +53,20 @@ function truck_movement_load_generator(callback)
 			return;
 		}
 
-		var options = {
-			url: url_base,
-			method: 'PUT',
-			//requestperSecond: 20,
-			maxRequests: 100000,
-			concurrency: 5,
-			requestGenerator: function(params, options, client, callback)
+		options.requestGenerator = function(params, options, client, callback)
 			{
 				
-				options.host = "localhost";
-				options.port = 3000;
+				options.host = test_host;
+				options.port = test_port;
 				options.method = "PUT";
 				request_index+=1;
-				request_index = request_index%trucks_list.length;
-				options.path = create_random_move_request(trucks_list[request_index]);
+				request_index = request_index%(Math.floor(trucks_list.length / 5));
+				options.path = update_api_base + create_random_move_request(trucks_list[request_index]);
 
 				var request = client(options, callback);
 				request.end();
-			},
-		};
-
+			};
+			
 		loadtest.loadTest(options, function(error, result)
 		{
 			if (error)
@@ -81,22 +76,53 @@ function truck_movement_load_generator(callback)
 
 			return callback(null, 'requestGenerator succeeded: ' + JSON.stringify(result));
 		});
-
-
-
 	});
-	
 }
 
 
 // start load test if invoked directly
 if (__filename == process.argv[1])
 {
-	truck_movement_load_generator(function(err, result) {
+	if ("move" == process.argv[2]) {
+
+        var options = {
+			url: url_base,
+			method: 'PUT',
+			equestsPerSecond: 200,
+			concurrency: 1,
+		};
+
+		truck_movement_load_generator(options, "/cache/truck/location/", function(err, result) {
+			if (err) {
+				return console.log(err);
+			}
+
+			console.log(result);
+		});
+		return;
+	}
+
+    var options = {
+			url: url_base,
+			method: 'PUT',
+			maxRequests: 100000,
+			concurrency: 50,
+		 };
+
+	console.log("Starting load test against " + url_base + "/truck/location/");
+	truck_movement_load_generator(options, "/truck/location/", function(err, result) {
 		if (err) {
-			console.log(err);
-			return;
+			return console.log(err);
 		}
+
 		console.log(result);
+		console.log("Starting load test against " + url_base + "/cache/truck/location/");
+		truck_movement_load_generator(options, "/cache/truck/location/", function(err, result) {
+			if (err) {
+				return console.log(err);
+			}
+
+			console.log(result);
+		});
 	});
 }

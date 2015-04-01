@@ -1,6 +1,6 @@
 
 /**
- * Truck Collection
+ * Truck Collectionls
  */
 
 var TruckList = Backbone.Collection.extend({
