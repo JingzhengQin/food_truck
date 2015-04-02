@@ -28,9 +28,9 @@ function load_trucks(url, callback) {
 }
 
 
-function create_random_move_request(truck_data) {
-	var d_lat = Math.floor(Math.random()*1000-500) * 0.0000003;
-	var d_long = Math.floor(Math.random()*1000-500) * 0.0000003;
+function create_random_move_request(truck_data, move_range) {
+	var d_lat = Math.floor(Math.random()*move_range-move_range/2) * 0.000001;
+	var d_long = Math.floor(Math.random()*move_range-move_range/2) * 0.000001;
 	var t_lat = parseFloat(truck_data.latitude) + d_lat;
 	var t_long = parseFloat(truck_data.longitude) + d_long;
 
@@ -44,7 +44,7 @@ function create_random_move_request(truck_data) {
 	return truck_data.location_id + "/" + t_lat + "/" + t_long;
 }
 
-function truck_movement_load_generator(options, update_api_base, callback)
+function truck_movement_load_generator(options, update_api_base, move_range, callback)
 {
 	var start = 0;
 	load_trucks(url_base + "/trucks", function (err, trucks_list) {
@@ -60,13 +60,13 @@ function truck_movement_load_generator(options, update_api_base, callback)
 				options.port = test_port;
 				options.method = "PUT";
 				request_index+=1;
-				request_index = request_index%(Math.floor(trucks_list.length / 5));
-				options.path = update_api_base + create_random_move_request(trucks_list[request_index]);
+				request_index = request_index%(Math.floor(trucks_list.length / 3));
+				options.path = update_api_base + create_random_move_request(trucks_list[request_index], move_range);
 
 				var request = client(options, callback);
 				request.end();
 			};
-			
+
 		loadtest.loadTest(options, function(error, result)
 		{
 			if (error)
@@ -92,7 +92,7 @@ if (__filename == process.argv[1])
 			concurrency: 1,
 		};
 
-		truck_movement_load_generator(options, "/cache/truck/location/", function(err, result) {
+		truck_movement_load_generator(options, "/cache/truck/location/", 1000, function(err, result) {
 			if (err) {
 				return console.log(err);
 			}
@@ -110,14 +110,14 @@ if (__filename == process.argv[1])
 		 };
 
 	console.log("Starting load test against " + url_base + "/truck/location/");
-	truck_movement_load_generator(options, "/truck/location/", function(err, result) {
+	truck_movement_load_generator(options, "/truck/location/", 1000, function(err, result) {
 		if (err) {
 			return console.log(err);
 		}
 
 		console.log(result);
 		console.log("Starting load test against " + url_base + "/cache/truck/location/");
-		truck_movement_load_generator(options, "/cache/truck/location/", function(err, result) {
+		truck_movement_load_generator(options, "/cache/truck/location/", 1000, function(err, result) {
 			if (err) {
 				return console.log(err);
 			}

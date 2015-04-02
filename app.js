@@ -26,7 +26,7 @@ app.use(function(req,res,next){
 var cached_trucks = {};
 var original_truck_coordinates = {};
 var Max_Cache_Distance = 100; // The maximum distance a truck can move without updating mongodb (in meters)
-var MAX_TRUCK_COUNT = 50; // Maximum trucks to return in distance search
+var MAX_TRUCK_COUNT = 25; // Maximum trucks to return in distance search
 
 /**
  * ============================================================

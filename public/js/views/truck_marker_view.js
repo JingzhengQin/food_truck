@@ -43,7 +43,7 @@ var TruckMarkerView = Backbone.View.extend({
       var that = this;
       this.refresh_interval = setInterval( function() {
         that.update_location(that.model)
-      }, 500);
+      }, 1500);
     },
 
     hide_truck_info : function() {
@@ -65,7 +65,7 @@ var TruckMarkerView = Backbone.View.extend({
             parseFloat(model.get('longitude')));
 
           that.marker.animateTo(newPosition, {  easing: "swing",
-                                           duration: 500,
+                                           duration: 3000,
                                            complete: function() {}
                                         });
       }});
