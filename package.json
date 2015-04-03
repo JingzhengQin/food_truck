@@ -16,6 +16,9 @@
     "array-union": "*",
     "loadtest": "*",
     "testing": "*",
-    "geolib": "*"
+    "geolib": "*",
+    "supertest": "*",
+    "mocha": "*",
+    "should": "*"
   }
 }

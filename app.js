@@ -382,23 +382,35 @@ app.use(function(err, req, res, next) {
     });
 });
 
+
 /**
  * ===========================================================
  * Refresh truck data and start the truck finder application
  * ===========================================================
  */
-refresh_cached_trucks(function(err) {
-    if (err) {
-        throw new Error("Failed to refresh cached trucks. " + err.message);
-    }
+function main() {
+    refresh_cached_trucks(function(err) {
+        if (err) {
+            throw new Error("Failed to refresh cached trucks. " + err.message);
+        }
 
-    var server = app.listen(3000, function () {
+        var server = app.listen(3000, function () {
 
-      var host = server.address().address
-      var port = server.address().port
+          var host = server.address().address
+          var port = server.address().port
 
-      console.log('Food Truck Finder listening at http://%s:%s', host, port)
+          console.log('Food Truck Finder listening at http://%s:%s', host, port)
 
+        });
     });
-});
+}
 
+if (__filename == process.argv[1]) {
+    main();
+}
+
+var my_app = {};
+my_app.app = app;
+my_app.db = db;
+my_app.refresh_trucks = refresh_cached_trucks;
+module.exports = my_app;
