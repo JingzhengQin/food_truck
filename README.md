@@ -1,26 +1,50 @@
 Food Truck Finder
 =================
 
-This project allows you find food trucks by address/location. (currently only has data for San Francisco)
+This project provides users ability to food food trucks nears a given address. Food truck can be moving to different places during different hours. So updating user with latest food truck information in real-time is also important. This food truck finder project also provide APIs to allow food truck owner to update current status to users in real-time. However, updating food truck location can be expensive during to index update, especially when we want to provide users food truck real-time (no delay/very small delay) location. I added a cache layer to so that we can reduce pressure to db without delaying the latest location infomation. Load test result shows that we can support ~50% more rps with ~30% less cpu usage. Latency is about the same, because most of cost is on networking. 
 
-This project is currently host at ec2: [foodtruck.qinjingzheng.com](http://foodtruck.qinjingzheng.com). You can also find the source code at [JingzhengQin's github](https://github.com/JingzhengQin/food_truck)
+The Food Truck Finder project is currently hosting at AWS EC2: [foodtruck.qinjingzheng.com](http://foodtruck.qinjingzheng.com). You can also find the source code at [JingzhengQin's github](https://github.com/JingzhengQin/food_truck)
 
-The Food Truck Finder project is full stack project which contains two parts: a) The front end is implemented base on [Backbone](http://backbonejs.org/) MVC. b) Back end uses [expreses](http://expressjs.com/) to provide RESTful APIs, and MongoDB for data storage. I selected these source as tech stack because they're very light weight. All javascript for front end, back end, and data processing so that we can share common code.
+This project is a full stack project which contains following parts:
+  a) UI: I uses [Backbone](http://backbonejs.org/) as base framework. backbone.googlemaps to display food trucks and map operations; some bootstrap css.
+  
+  b) Backend uses [expreses](http://expressjs.com/) to provide RESTful APIs to operate truck and refresh trucks data in bulk. We gain benifit from async by default; and I can reuse javascript components everywhere.
+  
+  c) I selected MongoDB for data storage because it supports a sample way for geo indexing; data can be store in json format; and flexible query commands.
+  
+  d) [mocha](https://github.com/mochajs/mocha), [should](https://www.npmjs.com/package/should), [supertest](https://github.com/visionmedia/supertest) for API integration test.
+
+I have little/no experience with techology I mention above, but I like to choose proper framwork/tools to accelerate the development process, easier integration (backbone is suggested by the challenge), and showoff my fast learning skill.
 
 Usage
 -----
 
-Open the hosting url. The page will pre-load some high rating food trucks within SF. 
+Open [foodtruck.qinjingzheng.com](http://foodtruck.qinjingzheng.com). The page will pre-load some high rating food trucks in SF. Select a food truck which you interested in search result side bar (right side) and it'll focus to corresponding google map marker with a food truck detail popup.
 
-Move mouse to search result side bar (right side) or food truck's google map marker to view detail information of the food truck.
+Type a address (e.g. 85 02ND ST San Francisco, CA) within SF in the search box and hit enter/search button, a list of food trucks near the input location will be returned.
 
-Type any address within SF into search box and hit enter/search button to find food trucks near the input location.
+You'll also see some food truck is moving around in real-time to give you latest information. 
+
+I'm using a simple load generator at backend to simulate the truck location update request. so you may see some trucks might move to some impossible places (it wont happend in real world).
 
 Installation
 ------------
 1. Download the project and make sure you have [node/npm](https://www.digitalocean.com/community/tutorials/how-to-install-express-a-node-js-framework-and-set-up-socket-io-on-a-vps), [mongoDB](https://www.mongodb.org/) installed in your machine.
 2. Go to root of the project and type `npm install` to install all dependencies.
-3. `node app.js` to start the app.
+4. `node app.js` to start the app.
+
+How to ingest truck data
+------------------------
+goto data_process folder and execute `node ingest_trucks_data.js` to ingest the data.
+we can also call /refresh API to refresh truck data from http://data.sfgov.org/resource/rqzj-sfat.json. I think a daily cron job should be enough because the data is not changing very frequently from sfgov website.
+
+How to start load to simulate truck movement
+---------------------------------------------
+Go to load_gen folder and run `node generate_load.js move`; it'll start simulating trucks movement requests againest local server
+
+How to run tests
+----------------
+Go to test folder and run `node truck_service_test.js`; and [mocha](https://github.com/mochajs/mocha) style output will tell you test results. 
 
 Front End
 ---------
@@ -32,13 +56,8 @@ Front end is based on backbone MVC framework.
 
 All front end files are in public folder. It can be hosted anywhere with any framework. (In this project, I use express to host the files)
 
-AppView in app.js is the main view of the application, contains google map. The structures is very simple, I believe most code are self-explained.
+AppView in app.js is the main view of the application, contains google map.
 
-These features can be easily support by the current framework if have time:
-* food truck realtime update/insert/delete by adding update/insert/delete functions to Truck model.
-* food truck gps location realtime tracking by adding location function to Truck model and event listener to googleMap model.
-* online ordering by adding ordering view and event listener to truck view.
-* and more...
 
 How to Install: host the public files.
 
