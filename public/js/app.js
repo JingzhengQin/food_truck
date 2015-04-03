@@ -83,7 +83,6 @@ var App = null;
       trucks.fetch({
         success: function() {
             that.list_view = new TruckListView({model: trucks, map: that.map});
-            that.list_view.render();
             }
       });
 }
