@@ -1,20 +1,21 @@
 Food Truck Finder
 =================
 
-This project allow users to search food trucks nears a given address. Food trucks can be moving to different places during different hours. So updating user with latest food truck information in real-time is also important. So this project also provide APIs for food truck owners to update their current location to users in real-time. However, updating food truck location can be expensive because of index update, especially when we want to provide users food truck near real-time (no delay/very small delay) location. To acheive this goal, I added a cache layer which only updates index when a food truck has moved more than a configuarable distance. I think it's unnessary to update index for every meter movement because when user will get a range anyway when they query food trucks near a specific location. All Get/Set operations will talk to cache first so that user can see trucks are moving in real-time and we reduced get/set/indexing pressure to db without delaying the latest location infomation. Load test results shows that we can support ~50% more rps with ~30% less cpu usage on a 4 cores Xeon 3.0GHz 64-bit ubuntu machine. Latency is about the same because most of cost is on networking. 
+This project allow users to search food trucks nears a address within given distance. Users can also see real-time traffic of food trucks. 
+
+Food trucks can be moving to different places during different hours. So updating user with latest food truck information in real-time is also important. So this project also provide APIs for food truck owners to update their current location to users in real-time. However, updating food truck location can be expensive because of index update, especially when we want to provide users food truck near real-time (no delay/very small delay) location. To acheive this goal, I added a cache layer which only updates index when a food truck has moved more than a configuarable distance. I think it's unnessary to update index for every meter movement because when user will get a range anyway when they query food trucks near a specific location. All Get/Set operations will talk to cache first so that user can see trucks are moving in real-time and we reduced get/set/indexing pressure to db without delaying the latest location infomation. Load test results shows that we can support ~50% more rps with ~30% less cpu usage on a 4 cores Xeon 3.0GHz 64-bit ubuntu machine. Latency is about the same because most of cost is on networking. 
 
 The Food Truck Finder project is currently hosting at AWS EC2: [foodtruck.qinjingzheng.com](http://foodtruck.qinjingzheng.com). You can also find the source code at [JingzhengQin's github](https://github.com/JingzhengQin/food_truck)
 
 
-This project is a full stack project which contains following parts:
-
-  a) UI: I uses [Backbone](http://backbonejs.org/) as base framework. google map as basic platform to display food trucks and map operations; some bootstrap css. I'm using Backbone in this project because it's light weight, has clean MVC, many libaries/tools support from the community.
+#####This project is a full stack project which contains following parts:
+  1. UI: I uses [Backbone](http://backbonejs.org/) as base framework. google map as basic platform to display food trucks and map operations; some bootstrap css. I'm using Backbone in this project because it's light weight, has clean MVC, many libaries/tools support from the community.
   
-  b) Backend I uses [expreses](http://expressjs.com/) to provide RESTful APIs to operate truck and refresh trucks data in bulk. I select node because we automatically gain benifits from async, this is important for web service performance; and I can reuse javascript components everywhere.
+  2. Backend I uses [expreses](http://expressjs.com/) to provide RESTful APIs to operate truck and refresh trucks data in bulk. I select node because we automatically gain benifits from async, this is important for web service performance; and I can reuse javascript components everywhere.
   
-  c) I selected MongoDB for data storage because it supports a sample way for geo indexing; data can be store in json format; and flexible query commands, and it's fast! truck_data_offline contains node scripts to sanitize/enrich raw data. some data is missing location information, use google map api to fill the column via address.
+  3. I selected MongoDB for data storage because it supports a sample way for geo indexing; data can be store in json format; and flexible query commands, and it's fast! truck_data_offline contains node scripts to sanitize/enrich raw data. some data is missing location information, use google map api to fill the column via address.
   
-  d) [mocha](https://github.com/mochajs/mocha), [should](https://www.npmjs.com/package/should), [supertest](https://github.com/visionmedia/supertest) for API integration test.
+  4. [mocha](https://github.com/mochajs/mocha), [should](https://www.npmjs.com/package/should), [supertest](https://github.com/visionmedia/supertest) for API integration test.
 
 The major consideration for above tech stack is light weight, high performance, and great support from community. Light weight can reduce a lot development pain like configuration, deployments, etc. and the overrall structure is simple and easy to extend. High performance is always important for large scale real-time web service. And I think community support is another way of reusability, we should always avoid doing duplicated works when it's possible beacuse development time also has big impacts to business. 
 
