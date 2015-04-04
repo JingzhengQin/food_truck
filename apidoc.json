@@ -1,0 +1,11 @@
+{
+  "name": "Food Truck Finder APIs Doc",
+  "version": "0.0.1",
+  "description": "",
+  "title": "Food Truck Finder APIs",
+  "url" : "https://foodtruck.qinjingzheng.com/doc",
+  "template": {
+  	"withCompare": true,
+  	"withGenerator": true
+  }
+}

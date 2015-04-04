@@ -221,10 +221,17 @@ app.use(express.static('public'));
  */
 app.use('/help', routes);
 
-/**
- * Refresh truck data with sfgov.org info to keep data up to date
- * Note: take argument to get data from different source if needed. We only have single source for now.
- */
+ /**
+  * @api {get} /refresh Refresh food trucks data
+  * @apiVersion 0.0.1
+  * @apiName Refresh
+  * @apiGroup Truck
+  *
+  * @apiDescription Refresh truck data with sfgov.org info to keep data up to date Note: take argument to get data from different source if needed. We only have single source for now.
+  * 
+  * @apiExample Example usage:
+  * curl -i http://localhost/refresh
+  */
 app.get('/refresh', function(req, res, next) {
     truck_data_processor.process_truck_data_from_http('http://data.sfgov.org/resource/rqzj-sfat.json', function(err, truck_data) {
         if (err) {
@@ -248,15 +255,43 @@ app.get('/refresh', function(req, res, next) {
     });
 });
 
-/**
- * Get truck info by location_id
- * @location_id identify the truck that we need
- * @return truck detail info in json format
- */
+ /**
+  * @api {get} /cache/truck/:location_id Get detail of a Truck from cache
+  * @apiVersion 0.0.1
+  * @apiName GetTruck
+  * @apiGroup Truck
+  *
+  * @apiDescription Get cached truck detail information by location_id
+  * 
+  * @apiParam {string} location_id The Truck's location id.
+  *
+  * @apiExample Example usage:
+  * curl -i http://localhost/cache/truck/305709
+  * 
+  * @apiSuccess {Object}   truck                The Truck with input location id.
+  * @apiSuccess {String}   truck.location_id    The Truck location ID.
+  * @apiSuccess {String}   truck.applicant      Truck name
+  * @apiSuccess {String}   truck.address        Address of the truck.
+  * @apiSuccess {String}   truck.location_desc  Detailed description of the address
+  * @apiSuccess {String}   truck.food_items     Selling items of the food truck
+  * @apiSuccess {Number}   truck.latitude       Current latitude of the food truck
+  * @apiSuccess {Number}   truck.longitude      Current longitude of the food truck
+  * @apiSuccess {Number}   truck.review_score   Rating of the food truck
+  *
+  * @apiError (Error 5xx) InternalError  Internal Service Error
+  * 
+  * @apiErrorExample Response (example):
+  *     HTTP/1.1 500 Service Unavailable
+  *     {
+  *       "error": "InternalError"
+  *     }
+  */
 app.get('/cache/truck/:location_id', function (req, res, next) {
     var location_id = req.params.location_id;
     get_truck_info_cached(location_id, function (err, doc) {
         if (err) {
+            err.status = 500;
+            err.error = "InternalError";
             return next(err);
         }
 
@@ -264,28 +299,74 @@ app.get('/cache/truck/:location_id', function (req, res, next) {
     });
 });
 
-/**
- * Non-Cached version get truck info by location_id
- * This API access mongodb directly to get truck info
- * Prefer use cached version, leave this here API for performance test purpose
- */
+ /**
+  * @api {get} /truck/:location_id Get detail of a Truck
+  * @apiVersion 0.0.1
+  * @apiName GetTruckNonCache
+  * @apiGroup Truck
+  *
+  * @apiDescription Get truck detail information from db by location_id. Note: Prefer use cached version, leave this here API for performance test purpose
+  * 
+  * @apiParam {string} location_id The Truck's location id.
+  *
+  * @apiExample Example usage:
+  * curl -i http://localhost/truck/305709
+  * 
+  * @apiSuccess {Object}   truck                The Truck with input location id.
+  * @apiSuccess {String}   truck.location_id    The Truck location ID.
+  * @apiSuccess {String}   truck.applicant      Truck name
+  * @apiSuccess {String}   truck.address        Address of the truck.
+  * @apiSuccess {String}   truck.location_desc  Detailed description of the address
+  * @apiSuccess {String}   truck.food_items     Selling items of the food truck
+  * @apiSuccess {Number}   truck.latitude       Current latitude of the food truck
+  * @apiSuccess {Number}   truck.longitude      Current longitude of the food truck
+  * @apiSuccess {Number}   truck.review_score   Rating of the food truck
+  *
+  * @apiError (Error 5xx) InternalError  Internal Service Error
+  * 
+  * @apiErrorExample Response (example):
+  *     HTTP/1.1 500 Service Unavailable
+  *     {
+  *       "error": "InternalError"
+  *     }
+  */
 app.get('/truck/:location_id', function (req, res, next) {
     var location_id = req.params.location_id;
     get_truck_info_mongodb(location_id, function (err, doc) {
         if (err) {
+            err.status = 500;
+            err.error = "InternalError";
             return next(err);
         }
         return res.json(doc);
     });
 });
 
-/**
- * Update truck location
- * @location_id identify the truck that need to be update
- * @latitude new latitude
- * @longitude new longitude
- * @return success status
- */
+ /**
+  * @api {put} /cache/truck/location/:location_id/:latitude/:longitude Update truck location from cache
+  * @apiVersion 0.0.1
+  * @apiName UpdateTruckLocation
+  * @apiGroup Truck
+  *
+  * @apiDescription Update truck location infomation
+  * 
+  * @apiParam {string} location_id Identify the truck that need to be update
+  * @apiParam {Number} latitude latitude of new truck location
+  * @apiParam {Number} longitude longitude of new truck location
+  *
+  * @apiExample Example usage:
+  * curl -i http://localhost/cache/truck/location/305709/37.283/-122.474667
+  * 
+  * @apiSuccess {string}   status               success stauts
+  *
+  * @apiError (Error 5xx) InternalError  Internal Service Error
+  * 
+  * @apiErrorExample Response (example):
+  *     HTTP/1.1 500 Service Unavailable
+  *     {
+  *       "error": "InternalError"
+  *     }
+  */
 app.put('/cache/truck/location/:location_id/:latitude/:longitude', function (req, res, next) {
     var location_id = req.params.location_id;
     var latitude = req.params.latitude;
@@ -293,6 +374,8 @@ app.put('/cache/truck/location/:location_id/:latitude/:longitude', function (req
 
     update_truck_location_cached(location_id, latitude, longitude, function(err) {
         if (err) {
+            err.status = 500;
+            err.error = "InternalError";
             return next(err);
         }
 
@@ -300,11 +383,31 @@ app.put('/cache/truck/location/:location_id/:latitude/:longitude', function (req
     });
 });
 
-/**
- * Non-Cached version update truck location
- * This API access mongodb directly
- * Prefer use cached version, leave this here API for performance test purpose
- */
+ /**
+  * @api {put} /truck/location/:location_id/:latitude/:longitude Update truck location
+  * @apiVersion 0.0.1
+  * @apiName UpdateTruckLocationNonCache
+  * @apiGroup Truck
+  *
+  * @apiDescription Non-Cached version update truck location, This API access db directly. Note: Prefer use cached version, leave this here API for performance test purpose
+  * 
+  * @apiParam {string} location_id Identify the truck that need to be update
+  * @apiParam {Number} latitude latitude of new truck location
+  * @apiParam {Number} longitude longitude of new truck location
+  *
+  * @apiExample Example usage:
+  * curl -i http://localhost/truck/location/305709/37.283/-122.474667
+  * 
+  * @apiSuccess {string}   status               success stauts
+  *
+  * @apiError (Error 5xx) InternalError  Internal Service Error
+  * 
+  * @apiErrorExample Response (example):
+  *     HTTP/1.1 500 Service Unavailable
+  *     {
+  *       "error": "InternalError"
+  *     }
+  */
 app.put('/truck/location/:location_id/:latitude/:longitude', function (req, res, next) {
     var location_id = req.params.location_id;
     var latitude = req.params.latitude;
@@ -312,6 +415,8 @@ app.put('/truck/location/:location_id/:latitude/:longitude', function (req, res,
 
     update_truck_location_mongodb(location_id, latitude, longitude, function(err) {
         if (err) {
+            err.status = 500;
+            err.error = "InternalError";
             return next(err);
         }
 
@@ -319,9 +424,19 @@ app.put('/truck/location/:location_id/:latitude/:longitude', function (req, res,
     });
 });
 
-/**
- * Get all trucks from cache
- */
+ /**
+  * @api {get} /trucks Get all trucks from cache
+  * @apiVersion 0.0.1
+  * @apiName GetAllTrucks
+  * @apiGroup Truck
+  *
+  * @apiDescription Get all trucks from cache
+  * 
+  * @apiExample Example usage:
+  * curl -i http://localhost/trucks
+  * 
+  * @apiSuccess {Object[]} Trucks A list of trucks (Array of Object) see GetTruck for truck's structure
+  */
 app.get('/trucks', function (req, res, next) {
     var result_trucks = [];
     for (var key in cached_trucks) {
@@ -330,13 +445,31 @@ app.get('/trucks', function (req, res, next) {
     res.json(result_trucks);
 });
 
-/**
- * Fetch trucks near a given location
- * @latitude latitude of the location need to search
- * @longitude longitude of the location need to search
- * @maxDistance maximum distance to search
- * @return a list of trucks
- */
+ /**
+  * @api {get} /trucks/near/:latitude/:longitude/:maxDistance Search trucks near a given location
+  * @apiVersion 0.0.1
+  * @apiName GetTrucksByLocation
+  * @apiGroup Truck
+  *
+  * @apiDescription Search trucks near a given location within maxDistance
+  *
+  * @apiParam {Number} latitude latitude of new truck location
+  * @apiParam {Number} longitude longitude of new truck location
+  * @apiParam {Number} maxDistance the max distance of trucks to return
+  *
+  * @apiExample Example usage:
+  * curl -i http://localhost/near/37.283/-122.474667/10000
+  * 
+  * @apiSuccess {Object[]} Trucks a list of trucks (Array of Object) see GetTruck for truck's structure
+  *
+  * @apiError (Error 5xx) InternalError  Internal Service Error
+  * 
+  * @apiErrorExample Response (example):
+  *     HTTP/1.1 500 Service Unavailable
+  *     {
+  *       "error": "InternalError"
+  *     }
+  */
 app.get('/trucks/near/:latitude/:longitude/:maxDistance', function (req, res, next) {
     var latitude = parseFloat(req.params.latitude);
     var longitude = parseFloat(req.params.longitude);
@@ -354,6 +487,8 @@ app.get('/trucks/near/:latitude/:longitude/:maxDistance', function (req, res, ne
         }
     }, {"limit": MAX_TRUCK_COUNT, "sort": "review_score"}, function (err, results) {
         if (err) {
+            err.status = 500;
+            err.error = "InternalError";
             next(err);
         }
         else {
