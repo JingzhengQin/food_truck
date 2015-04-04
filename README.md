@@ -5,7 +5,9 @@ This project allow users to search food trucks nears a given address. Food truck
 
 The Food Truck Finder project is currently hosting at AWS EC2: [foodtruck.qinjingzheng.com](http://foodtruck.qinjingzheng.com). You can also find the source code at [JingzhengQin's github](https://github.com/JingzhengQin/food_truck)
 
+
 This project is a full stack project which contains following parts:
+
   a) UI: I uses [Backbone](http://backbonejs.org/) as base framework. google map as basic platform to display food trucks and map operations; some bootstrap css. I'm using Backbone in this project because it's light weight, has clean MVC, many libaries/tools support from the community.
   
   b) Backend I uses [expreses](http://expressjs.com/) to provide RESTful APIs to operate truck and refresh trucks data in bulk. I select node because we automatically gain benifits from async, this is important for web service performance; and I can reuse javascript components everywhere.
