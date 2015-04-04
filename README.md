@@ -20,16 +20,9 @@ The major consideration for above tech stack is light weight, high performance, 
 
 I actually have very little experience with techologies I mentioned above, but I like to choose proper framwork/tools to accelerate the development process, easier integration (backbone is suggested by the challenge), and showoff my fast learning skill.
 
-APIs
-----
-
-```
-Get /            // Documentation page
-
-GET /trucks      //Return all trucks
-
-GET /trucks/near/:latitude/:longitude/:maxDistance            // Return trucks near location (latitude, longitude) within maxDistance
-```
+APIs Documentation
+-------------------
+http://foodtruck.qinjingzheng.com/doc/
 
 Usage
 -----
