@@ -62,45 +62,57 @@ Go to test folder and run `node truck_service_test.js`; and [mocha](https://gith
 Directories
 -----------
 ```
-.
-├── app.js                               // Back end node server;
+├── app.js                                // Back end node server;
+├── data_process                          // Contains all data processing files (node scripts)
+│   ├── ingest_trucks_data.js             // Ingest truck data into mongoDB. input: truck_data.json output: mongoDB collection
+│   ├── parse_raw_truck_data.js           // Parse raw truck data from [SF food truck](https://data.sfgov.org/Economy-and-Community/Mobile-Food-Facility-Permit/rqzj-sfat?) input: raw_truck_data.json output: truck_data.json
+│   ├── raw_truck_data.json
+│   └── truck_data.json
+├── load_gen
+│   └── generate_load.js                 // Load test and food truck movement load generator
 ├── package.json                         // Node dependencies
 ├── public                               // Front end html/javascript/css/image files are here. It can be host anywhere.
 │   ├── css
 │   │   ├── app.css
 │   │   └── lib                          // css libraries
-......
+│   │       ├── animation.css
+│   │       └── bootstrap.css
 │   ├── images
-......
-│   ├── index.html                       // Main page
+│   │   ├── cart-icon.png
+│   │   ├── food_truck.png
+│   │   ├── icon-truck.png
+│   │   ├── truck_1.png
+│   │   ├── truck_2.png
+│   │   ├── truck_3.png
+│   │   ├── truck_4.png
+│   │   └── truck_5.png
+│   ├── index.html                      // Main page
 │   └── js
-│       ├── app.js                       // Application main view extend from backbone
-│       ├── collections
-│       │   └── truck_list.js            // Abstraction of truck collection
-│       ├── lib                          // Libraries
+│       ├── app.js                      // Application main view extend from backbone
+│       ├── collections 
+│       │   └── truck_list.js           // Abstraction of truck collection
+│       ├── lib                         // Libraries
 │       │   ├── backbone.googlemaps.js
 │       │   ├── backbone-min.js
 │       │   ├── bootstrap.js
 │       │   ├── jquery.js
+│       │   ├── markerAnimate.js
 │       │   ├── markermanager.js
 │       │   └── underscore.js
 │       ├── models
 │       │   └── truck.js                 // Truck backbone model
 │       └── views
-│           ├── truck_list_item_view.js  // Backbond view represents a single row in search result side bar  
+│           ├── truck_list_item_view.js  // Backbond view represents a single row in search result side bar 
 │           ├── truck_list_view.js       // Backbond view represents search result side bar
 │           └── truck_marker_view.js     // Backbond view represents marker in google map
 ├── README.md                            // Help document
 ├── routes
-│   └── index.js                         // Doucument page for backend node service
-├── truck_data_offline                   // Contains all offline processing files (node scripts)
-│   ├── ingest_trucks_data.js            // Ingest truck data into mongoDB. input: truck_data.json output: mongoDB collection
-│   ├── parse_raw_truck_data.js          // Parse raw truck data from [SF food truck](https://data.sfgov.org/Economy-and-Community/Mobile-Food-Facility-Permit/rqzj-sfat?) input: raw_truck_data.json output: truck_data.json
-│   ├── raw_truck_data.json
-│   └── truck_data.json
+│   └── index.js
+├── tests
+│   └── truck_service_test.js            // APIs test
 └── views                                // Jade templates for back end node server
     ├── error.jade
     ├── index.jade
     └── layout.jade
-```
 
+```
