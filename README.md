@@ -73,14 +73,6 @@ Directories
 │   │       ├── animation.css
 │   │       └── bootstrap.css
 │   ├── images
-│   │   ├── cart-icon.png
-│   │   ├── food_truck.png
-│   │   ├── icon-truck.png
-│   │   ├── truck_1.png
-│   │   ├── truck_2.png
-│   │   ├── truck_3.png
-│   │   ├── truck_4.png
-│   │   └── truck_5.png
 │   ├── index.html                      // Main page
 │   └── js
 │       ├── app.js                      // Application main view extend from backbone
