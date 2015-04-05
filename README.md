@@ -1,11 +1,9 @@
 Food Truck Finder
 =================
 
-This project allow users to search food trucks nears a address within given distance. Users can also see real-time traffic of food trucks. 
+This project allow users to search food trucks information (food truck types, food items, etc) nears a address within given distance. Users can also see real-time traffic of food trucks. 
 
 Food trucks can be moving to different places during different hours. So updating user with latest food truck information in real-time is also important. So this project also provide APIs for food truck owners to update their current location to users in real-time. However, updating food truck location can be expensive because of index update, especially when we want to provide users food truck near real-time (no delay/very small delay) location. To acheive this goal, I added a cache layer which only updates index when a food truck has moved more than a configuarable distance. I think it's unnessary to update index for every meter movement because when user will get a range anyway when they query food trucks near a specific location. All Get/Set operations will talk to cache first so that user can see trucks are moving in real-time and we reduced get/set/indexing pressure to db without delaying the latest location infomation. Load test results shows that we can support ~50% more rps with ~30% less cpu usage on a 4 cores Xeon 3.0GHz 64-bit ubuntu machine. Latency is about the same because most of cost is on networking. 
-
-The Food Truck Finder project is currently hosting at AWS EC2: [foodtruck.qinjingzheng.com](http://foodtruck.qinjingzheng.com). You can also find the source code at [JingzhengQin's github](https://github.com/JingzhengQin/food_truck)
 
 
 #####This project is a full stack project which contains following parts:
@@ -23,7 +21,15 @@ I actually have very little experience with techologies I mentioned above, but I
 
 APIs Documentation
 -------------------
-http://foodtruck.qinjingzheng.com/doc/
+[foodtruck.qinjingzheng.com/doc](http://foodtruck.qinjingzheng.com/doc/)
+
+Hosting
+-------
+The Food Truck Finder project is currently hosting at AWS EC2: [foodtruck.qinjingzheng.com](http://foodtruck.qinjingzheng.com). You can also find the source code at [JingzhengQin's github](https://github.com/JingzhengQin/food_truck)
+
+Profile
+-------
+[Linkedin](https://www.linkedin.com/profile/view?id=111240877)
 
 Usage
 -----
